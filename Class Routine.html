@@ -160,11 +160,6 @@
               <p class="text-xs font-black uppercase tracking-wider text-blue-700">Mark tracker</p>
               <h2 class="mt-1 text-xl font-black text-blue-950">Course assessment</h2>
             </div>
-            <div class="flex gap-2 no-print">
-              <button id="resetMarks" class="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-50" type="button">
-                Reset data
-              </button>
-            </div>
           </div>
           <div id="trackerGrid" class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"></div>
         </div>
@@ -786,7 +781,6 @@
       wireAssistant();
       loadData();
 
-      document.getElementById("resetMarks").addEventListener("click", clearAllData);
       document.getElementById("summaryResetMarks").addEventListener("click", clearAllData);
       document.getElementById("printButton").addEventListener("click", () => window.print());
 
