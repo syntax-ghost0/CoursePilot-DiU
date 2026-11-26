@@ -812,13 +812,6 @@
 
       function applySectionView() {
         const view = new URLSearchParams(window.location.search).get("view");
-        if (window.self !== window.top) {
-          document.getElementById("pageHeader")?.setAttribute("hidden", "");
-          document.getElementById("pageFooter")?.setAttribute("hidden", "");
-          document.getElementById("chatPanel")?.setAttribute("hidden", "");
-          document.getElementById("dashboard")?.classList.remove("py-6");
-          document.getElementById("dashboard")?.classList.add("py-4");
-        }
         if (!view) return;
 
         const sectionIds = ["overview", "schedule", "courses", "faculty", "summary"];
