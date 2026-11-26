@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#172554" />
+    <title>CoursePilot | Student Course Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 28rem),
+          #eef4f8;
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(203, 213, 225, 0.9);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.07);
+      }
+
+      .nav-link.active {
+        background: #dbeafe;
+        color: #1e3a8a;
+      }
+
+      .schedule-card {
+        min-height: 78px;
+      }
+
+      .resource-link {
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+
+      .resource-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(30, 64, 175, 0.12);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+
+      @media print {
+        .no-print,
+        #chatPanel {
+          display: none !important;
+        }
+
+        body {
+          background: white;
+        }
+
+        .print-section {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans text-slate-800">
+    <header id="pageHeader" class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur no-print">
+      <div class="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-6">
+        <a href="#dashboard" class="flex items-center gap-3" aria-label="CoursePilot home">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-blue-950 text-xl text-white shadow-lg">CP</span>
+          <span>
+            <strong class="block text-lg leading-tight text-blue-950">CoursePilot</strong>
+            <small class="block text-xs font-semibold text-slate-500">Summer 2026</small>
+          </span>
+        </a>
+
+        <nav class="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+          <a class="nav-link active rounded-lg px-3 py-2 text-sm font-bold" href="Dashboard.html" data-view="overview">Dashboard</a>
+          <a class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600" href="Routine.html" data-view="schedule">Routine</a>
+          <a class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600" href="Courses.html" data-view="courses">Courses</a>
+          <a class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600" href="Teachers.html" data-view="faculty">Teachers</a>
+          <a class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600" href="Summary.html" data-view="summary">Summary</a>
+        </nav>
+
+        <button id="printButton" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50" type="button">
+          Print
+        </button>
+      </div>
+    </header>
+
+    <main id="dashboard" class="mx-auto max-w-[1500px] space-y-6 px-4 py-6 md:px-6">
+      <section id="overview" class="glass-card rounded-2xl p-5 md:p-7 print-section">
+        <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-blue-700">Student workspace</p>
+            <h1 class="text-2xl font-black text-blue-950 md:text-4xl">Your courses, routine and progress.</h1>
+            <p id="todaySummary" class="mt-2 text-sm font-semibold text-slate-600"></p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 md:min-w-[420px]">
+            <div class="rounded-xl bg-blue-50 p-3 text-center">
+              <strong id="courseCount" class="block text-2xl text-blue-950">9</strong>
+              <span class="text-xs font-bold text-slate-500">Courses</span>
+            </div>
+            <div class="rounded-xl bg-emerald-50 p-3 text-center">
+              <strong id="creditCount" class="block text-2xl text-emerald-800">16</strong>
+              <span class="text-xs font-bold text-slate-500">Credits</span>
+            </div>
+            <div class="rounded-xl bg-amber-50 p-3 text-center">
+              <strong id="overlapCount" class="block text-2xl text-amber-800">3</strong>
+              <span class="text-xs font-bold text-slate-500">Overlaps</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-3 md:grid-cols-3">
+          <article class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+            <p class="text-xs font-black uppercase tracking-wider text-blue-600">Next class</p>
+            <strong id="dashboardNextClass" class="mt-2 block text-lg text-blue-950">Checking routine...</strong>
+            <p class="mt-1 text-xs text-slate-500">Based on the weekly timetable</p>
+          </article>
+          <article class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+            <p class="text-xs font-black uppercase tracking-wider text-emerald-600">CGPA</p>
+            <strong id="dashboardCgpa" class="mt-2 block text-lg text-emerald-900">Pending</strong>
+            <p id="dashboardAssessed" class="mt-1 text-xs text-slate-500">No courses assessed yet</p>
+          </article>
+          <article class="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4">
+            <p class="text-xs font-black uppercase tracking-wider text-amber-700">Quick actions</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <a class="rounded-lg bg-white px-3 py-2 text-xs font-black text-blue-800 shadow-sm" href="?view=schedule" data-dashboard-view="schedule">View routine</a>
+              <a class="rounded-lg bg-white px-3 py-2 text-xs font-black text-blue-800 shadow-sm" href="?view=courses" data-dashboard-view="courses">Update marks</a>
+              <a class="rounded-lg bg-white px-3 py-2 text-xs font-black text-blue-800 shadow-sm" href="?view=faculty" data-dashboard-view="faculty">Teachers</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="schedule" class="glass-card rounded-2xl p-4 md:p-6 print-section">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+          <div>
+            <p class="text-xs font-black uppercase tracking-wider text-blue-700">Weekly timetable</p>
+            <h2 class="mt-1 text-xl font-black text-blue-950">Class routine</h2>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[980px] border-collapse text-center">
+            <thead>
+              <tr id="scheduleHead" class="bg-blue-950 text-xs font-bold uppercase text-white"></tr>
+            </thead>
+            <tbody id="scheduleBody" class="text-sm"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="courses" class="space-y-4 print-section">
+        <div class="glass-card rounded-2xl p-5">
+          <div class="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="text-xs font-black uppercase tracking-wider text-blue-700">Mark tracker</p>
+              <h2 class="mt-1 text-xl font-black text-blue-950">Course assessment</h2>
+            </div>
+            <div class="flex gap-2 no-print">
+              <button id="resetMarks" class="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-50" type="button">
+                Reset data
+              </button>
+            </div>
+          </div>
+          <div id="trackerGrid" class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"></div>
+        </div>
+      </section>
+
+      <section id="faculty" class="glass-card rounded-2xl p-4 md:p-6 print-section">
+        <div class="mb-4 border-b border-slate-200 pb-3">
+          <p class="text-xs font-black uppercase tracking-wider text-blue-700">Faculty directory</p>
+          <h2 class="mt-1 text-xl font-black text-blue-950">Course teachers</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[760px] border-collapse text-left text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-xs uppercase text-slate-600">
+                <th class="p-3">Course</th>
+                <th class="p-3">Title</th>
+                <th class="p-3">Teacher</th>
+                <th class="p-3">Initials</th>
+                <th class="p-3">Office</th>
+                <th class="p-3">Phone</th>
+              </tr>
+            </thead>
+            <tbody id="facultyBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="summary" class="glass-card rounded-2xl p-5 print-section">
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+          <div>
+            <p class="text-xs font-black uppercase tracking-wider text-blue-700">Semester overview</p>
+            <h2 class="mt-1 text-xl font-black text-blue-950">Academic summary</h2>
+          </div>
+          <div class="flex gap-2 no-print">
+            <a href="?view=courses" data-summary-view="courses" class="rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white">Update marks</a>
+            <button id="summaryResetMarks" class="rounded-lg border border-red-200 px-3 py-2 text-xs font-black text-red-700 hover:bg-red-50" type="button">Reset data</button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-xl bg-blue-950 p-5 text-white">
+            <p class="text-xs font-bold uppercase tracking-wider text-blue-200">Semester CGPA</p>
+            <strong id="overallCgpa" class="mt-2 block text-3xl text-emerald-300">Pending</strong>
+            <p id="overallRemark" class="mt-1 text-xs text-blue-200">Enter assessment marks to calculate</p>
+          </div>
+          <div class="rounded-xl bg-slate-100 p-5">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Credit-weighted marks</p>
+            <strong id="weightedMarks" class="mt-2 block text-3xl text-blue-950">Pending</strong>
+            <p id="courseCreditSummary" class="mt-1 text-xs text-slate-500">Across 9 courses</p>
+          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+            <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Courses assessed</p>
+            <strong id="summaryAssessedCount" class="mt-2 block text-3xl text-emerald-900">0 / 9</strong>
+            <p id="summaryPassCount" class="mt-1 text-xs text-emerald-700">0 passed • 0 failed</p>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Assessment progress</p>
+            <strong id="summaryAssessmentProgress" class="mt-2 block text-3xl text-amber-900">0%</strong>
+            <p id="summaryAssessmentDetail" class="mt-1 text-xs text-amber-700">0 of 0 fields entered</p>
+          </div>
+        </div>
+
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <p class="text-xs font-black uppercase tracking-wider text-slate-500">Best result</p>
+            <strong id="summaryBestCourse" class="mt-2 block text-lg text-emerald-800">Pending</strong>
+            <p id="summaryBestDetail" class="mt-1 text-xs text-slate-500">Enter course marks to calculate</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <p class="text-xs font-black uppercase tracking-wider text-slate-500">Lowest result</p>
+            <strong id="summaryLowestCourse" class="mt-2 block text-lg text-red-700">Pending</strong>
+            <p id="summaryLowestDetail" class="mt-1 text-xs text-slate-500">Enter course marks to calculate</p>
+          </div>
+        </div>
+
+        <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full min-w-[620px] border-collapse text-left text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-xs uppercase text-slate-600">
+                <th class="p-3">Course</th>
+                <th class="p-3">Title</th>
+                <th class="p-3">Credits</th>
+                <th class="p-3">Marks</th>
+                <th class="p-3">Grade</th>
+                <th class="p-3">Point</th>
+              </tr>
+            </thead>
+            <tbody id="summaryCourseBody"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-slate-200 p-4">
+          <p class="mb-2 text-xs font-black uppercase tracking-wider text-slate-500">UGC grading scale</p>
+          <p class="text-xs leading-relaxed text-slate-600">A+: 80+ | A: 75+ | A-: 70+ | B+: 65+ | B: 60+ | B-: 55+ | C+: 50+ | C: 45+ | D: 40+ | F: Below 40</p>
+        </div>
+      </section>
+    </main>
+
+    <aside id="chatPanel" class="no-print fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] max-w-sm">
+      <div id="chatBox" class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div class="flex items-center justify-between bg-blue-950 px-4 py-3 text-white">
+          <div>
+            <strong>CoursePilot Assistant</strong>
+            <small class="block text-xs text-blue-200">Routine & course guide</small>
+          </div>
+          <button id="closeChat" class="rounded-lg p-1 text-xl leading-none hover:bg-white/10" type="button" aria-label="Close assistant">×</button>
+        </div>
+        <div id="chatMessages" class="h-72 space-y-3 overflow-y-auto p-4" aria-live="polite">
+          <div class="max-w-[85%] rounded-xl rounded-tl-none bg-slate-100 px-3 py-2 text-sm">
+            Ask me about today’s routine, teachers, overlaps or study resources.
+          </div>
+        </div>
+        <form id="chatForm" class="flex gap-2 border-t border-slate-200 p-3">
+          <input id="chatInput" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="Ask about CSE415..." autocomplete="off" />
+          <button class="rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white" type="submit">Send</button>
+        </form>
+      </div>
+      <button id="openChat" class="ml-auto flex h-14 items-center gap-2 rounded-full bg-blue-950 px-5 text-sm font-bold text-white shadow-xl" type="button">
+        <span class="text-xl">✦</span> Ask CoursePilot
+      </button>
+    </aside>
+
+    <script>
+      const times = ["08:30 AM", "10:00 AM", "11:30 AM", "01:00 PM", "02:30 PM", "04:00 PM"];
+      const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+
+      const courses = [
+        { code: "ACT322", title: "Finance", credit: 2, type: "Theory", teacher: "Shammi Akter", initials: "SA" },
+        { code: "CSE233", title: "Internet of Things", credit: 2, type: "Theory", teacher: "SRRS Teacher", initials: "SRRS" },
+        { code: "CSE335", title: "Computer Architecture", credit: 3, type: "Theory", teacher: "MAIT Teacher", initials: "MAIT" },
+        { code: "CSE235", title: "Numerical Methods", credit: 3, type: "Theory", teacher: "Mohammad Abdul Halim", initials: "ALH" },
+        { code: "CSE334", title: "Research & Innovation", credit: 1, type: "Theory", teacher: "Tabib", initials: "TB" },
+        { code: "CSE415", title: "Web Engineering", credit: 2, type: "Theory", teacher: "Zafor Iqbal", initials: "ZI" },
+        { code: "CSE223", title: "Digital Electronics", credit: 1, type: "Theory", teacher: "Mohammad Al Rasel", initials: "MAR" },
+        { code: "CSE224", title: "Digital Electronics Lab", credit: 1, type: "Lab", teacher: "Not provided", initials: "—" },
+        { code: "CSE316", title: "Software Project III", credit: 1, type: "Project", teacher: "Not provided", initials: "—" }
+      ];
+
+      const theoryAssessments = [
+        { name: "Quiz 1", max: 15, quiz: true },
+        { name: "Quiz 2", max: 15, quiz: true },
+        { name: "Quiz 3", max: 15, quiz: true },
+        { name: "Mid-Term Examination", max: 25 },
+        { name: "Semester Final Examination", max: 40 },
+        { name: "Presentation", max: 8 },
+        { name: "Attendance", max: 7 },
+        { name: "Assignments", max: 5 }
+      ];
+
+      const courseAssessments = {
+        Lab: [
+          { name: "Lab Experiments", max: 40 },
+          { name: "Lab Reports", max: 20 },
+          { name: "Viva", max: 20 },
+          { name: "Final Assessment", max: 20 }
+        ],
+        Project: [
+          { name: "Proposal", max: 10 },
+          { name: "Progress", max: 20 },
+          { name: "Presentation", max: 20 },
+          { name: "Final Project", max: 50 }
+        ]
+      };
+
+      const schedule = {
+        Saturday: { "01:00 PM": [{ code: "ACT322", title: "Finance", room: "KT_217", teacher: "Shammi Akter", color: "emerald" }] },
+        Sunday: {
+          "08:30 AM": [{ code: "CSE233", title: "IoT", room: "ANX1_207", teacher: "SRRS", color: "blue" }],
+          "01:00 PM": [{ code: "CSE335", title: "Computer Architecture", room: "ANEX1_202", teacher: "MAIT", color: "indigo" }],
+          "02:30 PM": [{ code: "CSE224", title: "Digital Electronics Lab", room: "KT-810", teacher: "Roitune Section", color: "orange", span: "02:30–05:30 PM" }]
+        },
+        Monday: { "10:00 AM": [{ code: "CSE235", title: "Numerical Methods", room: "ANEX1_307", teacher: "Mohammad Abdul Halim", color: "purple" }] },
+        Tuesday: {
+          "08:30 AM": [{ code: "CSE233", title: "IoT", room: "ANX1_210", teacher: "SRRS", color: "blue" }],
+          "11:30 AM": [{ code: "CSE335", title: "Computer Architecture", room: "ANEX1_401", teacher: "MAIT", color: "indigo" }]
+        },
+        Wednesday: {
+          "08:30 AM": [{ code: "CSE415", title: "Web Engineering", room: "ANX1_209", teacher: "Zafor Iqbal", color: "teal" }],
+          "10:00 AM": [
+            { code: "CSE235", title: "Numerical Methods", room: "ANEX1_204", teacher: "Mohammad Abdul Halim", color: "purple" },
+            { code: "CSE223", title: "Digital Electronics", room: "ANX_209", teacher: "Mohammad Al Rasel", color: "red", overlap: "Overlaps CSE235" }
+          ],
+          "04:00 PM": [{ code: "CSE334", title: "Research & Innovation", room: "AB4_318(B)", teacher: "Tabib", color: "amber", overlap: "Potential ACT322 shift overlap" }]
+        },
+        Thursday: {
+          "11:30 AM": [
+            { code: "CSE415", title: "Web Engineering", room: "KT320", teacher: "Zafor Iqbal", color: "teal" },
+            { code: "CSE223", title: "Digital Electronics", room: "KT_514", teacher: "Mohammad Al Rasel", color: "red", overlap: "Overlaps CSE415" }
+          ],
+          "01:00 PM": [{ code: "ACT322", title: "Finance", room: "KT_217", teacher: "Shammi Akter", color: "emerald" }]
+        }
+      };
+
+      const colorClasses = {
+        blue: "border-blue-600 bg-blue-100 text-blue-900",
+        emerald: "border-emerald-600 bg-emerald-100 text-emerald-900",
+        indigo: "border-indigo-600 bg-indigo-100 text-indigo-900",
+        purple: "border-purple-600 bg-purple-100 text-purple-900",
+        orange: "border-orange-600 bg-orange-100 text-orange-900",
+        teal: "border-teal-600 bg-teal-100 text-teal-900",
+        red: "border-red-600 bg-red-100 text-red-900",
+        amber: "border-amber-600 bg-amber-100 text-amber-900"
+      };
+
+      function scheduleKey() {
+        return "coursepilot_v2_";
+      }
+
+      function calculateGrade(marks) {
+        if (marks === null) return { grade: "Pending", point: null, remark: "Pending Marks" };
+        if (marks >= 80) return { grade: "A+", point: 4.0, remark: "Outstanding" };
+        if (marks >= 75) return { grade: "A", point: 3.75, remark: "Excellent" };
+        if (marks >= 70) return { grade: "A-", point: 3.5, remark: "Very Good" };
+        if (marks >= 65) return { grade: "B+", point: 3.25, remark: "Good" };
+        if (marks >= 60) return { grade: "B", point: 3.0, remark: "Satisfactory" };
+        if (marks >= 55) return { grade: "B-", point: 2.75, remark: "Above Average" };
+        if (marks >= 50) return { grade: "C+", point: 2.5, remark: "Average" };
+        if (marks >= 45) return { grade: "C", point: 2.25, remark: "Below Average" };
+        if (marks >= 40) return { grade: "D", point: 2.0, remark: "Pass" };
+        return { grade: "F", point: 0.0, remark: "Fail" };
+      }
+
+      function buildSchedule() {
+        document.getElementById("scheduleHead").innerHTML =
+          '<th class="border border-blue-800 p-3">Day / Time</th>' +
+          times.map((time) => `<th class="border border-blue-800 p-3">${time}–${nextTime(time)}</th>`).join("");
+
+        document.getElementById("scheduleBody").innerHTML = days.map((day) => {
+          const cells = times.map((time) => {
+            const classes = schedule[day][time] || [];
+            const content = classes.map((item) => `
+              <div class="schedule-card mb-1 rounded-lg border-l-4 p-2 text-left ${colorClasses[item.color]}">
+                <strong class="block text-sm">${item.code}</strong>
+                <span class="block text-xs font-bold">${item.title}</span>
+                <span class="block text-[11px]">${item.teacher} • ${item.room}</span>
+                ${item.span ? `<span class="mt-1 inline-block rounded bg-orange-700 px-1 py-0.5 text-[10px] text-white">${item.span}</span>` : ""}
+                ${item.overlap ? `<span class="mt-1 inline-block rounded bg-red-700 px-1 py-0.5 text-[10px] text-white">${item.overlap}</span>` : ""}
+              </div>
+            `).join("");
+            return `<td class="border border-slate-300 p-2 align-top">${content}</td>`;
+          }).join("");
+          return `<tr class="hover:bg-blue-50/40"><th class="border border-slate-300 bg-blue-900 p-3 text-white">${day}</th>${cells}</tr>`;
+        }).join("");
+      }
+
+      function nextTime(time) {
+        const index = times.indexOf(time);
+        return index < times.length - 1 ? times[index + 1] : "05:30 PM";
+      }
+
+      function assessmentList(course) {
+        return course.type === "Theory" ? theoryAssessments : courseAssessments[course.type];
+      }
+
+      function keyFor(courseCode, itemName) {
+        return `${courseCode}_${itemName.replace(/[^a-zA-Z0-9]/g, "")}`;
+      }
+
+      function buildTrackers() {
+        const grid = document.getElementById("trackerGrid");
+        grid.innerHTML = "";
+
+        courses.forEach((course) => {
+          const assessments = assessmentList(course);
+          const card = document.createElement("article");
+          card.className = "rounded-xl border border-slate-200 bg-white p-4";
+          card.innerHTML = `
+            <div class="mb-3 flex items-start justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 class="text-lg font-black text-blue-950">${course.code}</h3>
+                <p class="text-xs font-bold text-slate-500">${course.title}</p>
+                <p class="mt-1 text-[11px] font-bold text-indigo-700">${course.credit} credits • ${course.type}</p>
+              </div>
+              <span id="grade_${course.code}" class="rounded-full bg-slate-100 px-2 py-1 text-xs font-black text-slate-600">Pending</span>
+            </div>
+            ${course.type === "Theory" ? `
+              <div class="mb-3 flex justify-between rounded-lg bg-indigo-50 p-2 text-xs">
+                <strong class="text-indigo-900">Quiz average</strong>
+                <span id="quiz_${course.code}" class="font-black text-indigo-700">Pending</span>
+              </div>
+            ` : ""}
+            <div class="space-y-2">
+              ${assessments.map((item) => {
+                const key = keyFor(course.code, item.name);
+                return `
+                  <div id="box_${key}" class="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-xs font-bold text-slate-700" for="mark_${key}">${item.name}</label>
+                      <div class="flex items-center gap-1">
+                        <input id="mark_${key}" type="number" min="0" max="${item.max}" placeholder="—"
+                          class="w-14 rounded border border-slate-300 bg-white px-1 py-1 text-center text-xs font-bold"
+                          aria-label="${course.code} ${item.name} marks" />
+                        <span class="text-[10px] font-bold text-slate-400">/ ${item.max}</span>
+                      </div>
+                    </div>
+                    <input id="date_${key}" type="date" aria-label="${course.code} ${item.name} deadline"
+                      class="mt-2 w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600" />
+                  </div>
+                `;
+              }).join("")}
+            </div>
+            <div class="mt-3 flex items-center justify-between rounded-lg bg-blue-50 p-3">
+              <span class="text-xs font-bold text-slate-600">Course total</span>
+              <strong id="total_${course.code}" class="text-sm text-blue-950">Pending</strong>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        courses.forEach((course) => {
+          assessmentList(course).forEach((item) => {
+            const key = keyFor(course.code, item.name);
+            const mark = document.getElementById(`mark_${key}`);
+            const date = document.getElementById(`date_${key}`);
+            mark.addEventListener("input", saveData);
+            date.addEventListener("change", saveData);
+          });
+        });
+      }
+
+      function saveData() {
+        let weightedMarks = 0;
+        let weightedPoints = 0;
+        let hasAnyMarks = false;
+        let enteredCourses = 0;
+        let enteredCredits = 0;
+        let enteredFields = 0;
+        const summaryRows = [];
+        const totalFields = courses.reduce((sum, course) => sum + assessmentList(course).length, 0);
+
+        courses.forEach((course) => {
+          let total = 0;
+          let hasCourseMarks = false;
+          let quizMarks = [];
+
+          assessmentList(course).forEach((item) => {
+            const key = keyFor(course.code, item.name);
+            const markInput = document.getElementById(`mark_${key}`);
+            const dateInput = document.getElementById(`date_${key}`);
+            let value = markInput.value === "" ? null : Number(markInput.value);
+
+            if (value !== null) {
+              if (!Number.isFinite(value)) value = null;
+              value = Math.max(0, Math.min(item.max, value));
+              markInput.value = value;
+              hasCourseMarks = true;
+              hasAnyMarks = true;
+              enteredFields++;
+              total += value;
+              if (item.quiz) quizMarks.push(value);
+            }
+
+            localStorage.setItem(scheduleKey() + `mark_${key}`, markInput.value);
+            localStorage.setItem(scheduleKey() + `date_${key}`, dateInput.value);
+
+            const box = document.getElementById(`box_${key}`);
+            box.className = "rounded-lg border p-2";
+            if (value === null) {
+              box.classList.add("border-slate-200", "bg-slate-50");
+            } else if (value > 0) {
+              box.classList.add("border-emerald-300", "bg-emerald-50");
+            } else {
+              box.classList.add("border-red-300", "bg-red-50");
+            }
+          });
+
+          let finalMarks = null;
+          let display = "Pending";
+          if (course.type === "Theory") {
+            if (quizMarks.length > 0) {
+              const quizAverage = quizMarks.reduce((sum, value) => sum + value, 0) / quizMarks.length;
+              document.getElementById(`quiz_${course.code}`).textContent = `${quizAverage.toFixed(2)} / 15`;
+            } else {
+              document.getElementById(`quiz_${course.code}`).textContent = "Pending";
+            }
+          }
+
+          if (hasCourseMarks) {
+            finalMarks = course.type === "Theory"
+              ? calculateTheoryTotal(course.code)
+              : total;
+            display = `${finalMarks.toFixed(2)} / 100`;
+            enteredCourses++;
+            enteredCredits += course.credit;
+            weightedMarks += finalMarks * course.credit;
+            const grade = calculateGrade(finalMarks);
+            weightedPoints += (grade.point ?? 0) * course.credit;
+            summaryRows.push({ course, marks: finalMarks, grade });
+          } else {
+            document.getElementById(`grade_${course.code}`).textContent = "Pending";
+          }
+
+          document.getElementById(`total_${course.code}`).textContent = display;
+          if (finalMarks !== null) {
+            const grade = calculateGrade(finalMarks);
+            const badge = document.getElementById(`grade_${course.code}`);
+            badge.textContent = `${grade.grade} • ${grade.point?.toFixed(2)}`;
+            badge.className = `rounded-full px-2 py-1 text-xs font-black ${grade.point >= 2 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`;
+          }
+        });
+
+        const totalCredits = courses.reduce((sum, course) => sum + course.credit, 0);
+        if (enteredCourses > 0) {
+          const cgpa = weightedPoints / enteredCredits;
+          const average = weightedMarks / enteredCredits;
+          document.getElementById("overallCgpa").textContent = `${cgpa.toFixed(2)} / 4.00`;
+          document.getElementById("weightedMarks").textContent = `${average.toFixed(2)} / 100`;
+          document.getElementById("dashboardCgpa").textContent = `${cgpa.toFixed(2)} / 4.00`;
+          document.getElementById("dashboardAssessed").textContent = `${enteredCourses} of 9 courses assessed`;
+          document.getElementById("courseCreditSummary").textContent =
+            `Across ${enteredCourses} assessed courses • ${totalCredits} credits`;
+          const overall = calculateGrade(average);
+          document.getElementById("overallRemark").textContent =
+            `Credit-weighted estimate: ${overall.remark} (${overall.grade})`;
+        } else {
+          document.getElementById("overallCgpa").textContent = "Pending";
+          document.getElementById("weightedMarks").textContent = "Pending";
+          document.getElementById("dashboardCgpa").textContent = "Pending";
+          document.getElementById("dashboardAssessed").textContent = "No courses assessed yet";
+          document.getElementById("overallRemark").textContent = "Enter assessment marks to calculate";
+        }
+
+        document.getElementById("summaryAssessedCount").textContent = `${enteredCourses} / ${courses.length}`;
+        const passed = summaryRows.filter((row) => row.grade.point !== null && row.grade.point >= 2).length;
+        const failed = summaryRows.length - passed;
+        document.getElementById("summaryPassCount").textContent = `${passed} passed • ${failed} failed`;
+
+        const progress = totalFields ? Math.round((enteredFields / totalFields) * 100) : 0;
+        document.getElementById("summaryAssessmentProgress").textContent = `${progress}%`;
+        document.getElementById("summaryAssessmentDetail").textContent = `${enteredFields} of ${totalFields} fields entered`;
+
+        const sortedRows = [...summaryRows].sort((a, b) => b.marks - a.marks);
+        if (sortedRows.length) {
+          const best = sortedRows[0];
+          const lowest = sortedRows[sortedRows.length - 1];
+          document.getElementById("summaryBestCourse").textContent = `${best.course.code} — ${best.grade.grade}`;
+          document.getElementById("summaryBestDetail").textContent = `${best.marks.toFixed(2)} / 100 • ${best.course.title}`;
+          document.getElementById("summaryLowestCourse").textContent = `${lowest.course.code} — ${lowest.grade.grade}`;
+          document.getElementById("summaryLowestDetail").textContent = `${lowest.marks.toFixed(2)} / 100 • ${lowest.course.title}`;
+        } else {
+          document.getElementById("summaryBestCourse").textContent = "Pending";
+          document.getElementById("summaryBestDetail").textContent = "Enter course marks to calculate";
+          document.getElementById("summaryLowestCourse").textContent = "Pending";
+          document.getElementById("summaryLowestDetail").textContent = "Enter course marks to calculate";
+        }
+
+        document.getElementById("summaryCourseBody").innerHTML = courses.map((course) => {
+          const row = summaryRows.find((item) => item.course.code === course.code);
+          if (!row) {
+            return `
+              <tr class="border-b border-slate-200">
+                <td class="p-3 font-black text-blue-950">${course.code}</td>
+                <td class="p-3">${course.title}</td>
+                <td class="p-3">${course.credit}</td>
+                <td class="p-3 text-slate-400">Pending</td>
+                <td class="p-3 text-slate-400">Pending</td>
+                <td class="p-3 text-slate-400">—</td>
+              </tr>
+            `;
+          }
+          return `
+            <tr class="border-b border-slate-200 hover:bg-slate-50">
+              <td class="p-3 font-black text-blue-950">${course.code}</td>
+              <td class="p-3">${course.title}</td>
+              <td class="p-3">${course.credit}</td>
+              <td class="p-3 font-bold">${row.marks.toFixed(2)} / 100</td>
+              <td class="p-3"><span class="rounded-full ${row.grade.point >= 2 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"} px-2 py-1 text-xs font-black">${row.grade.grade}</span></td>
+              <td class="p-3 font-bold">${row.grade.point?.toFixed(2)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        saveFaculty();
+        document.getElementById("todaySummary").textContent = hasAnyMarks
+          ? "Your dashboard data is saved automatically on this device."
+          : "No assessment marks entered. Your CGPA will remain pending.";
+      }
+
+      function calculateTheoryTotal(courseCode) {
+        let quizValues = [];
+        let otherTotal = 0;
+
+        theoryAssessments.forEach((item) => {
+          const key = keyFor(courseCode, item.name);
+          const raw = document.getElementById(`mark_${key}`).value;
+          if (raw !== "") {
+            const value = Number(raw);
+            if (item.quiz) quizValues.push(value);
+            else otherTotal += value;
+          }
+        });
+
+        const quizAverage = quizValues.length
+          ? quizValues.reduce((sum, value) => sum + value, 0) / quizValues.length
+          : 0;
+        return quizAverage + otherTotal;
+      }
+
+      function buildFaculty() {
+        document.getElementById("facultyBody").innerHTML = courses.map((course) => `
+          <tr class="border-b border-slate-200 hover:bg-slate-50">
+            <td class="p-3 font-black text-blue-950">${course.code}</td>
+            <td class="p-3 font-bold">${course.title}</td>
+            <td class="p-3">${course.teacher}</td>
+            <td class="p-3 font-mono font-bold">${course.initials}</td>
+            <td class="p-3"><input id="office_${course.code}" type="text" placeholder="Office room" class="w-full rounded border border-slate-300 px-2 py-1 text-xs" /></td>
+            <td class="p-3"><input id="phone_${course.code}" type="tel" placeholder="017xxxxxxxx" class="w-full rounded border border-slate-300 px-2 py-1 text-xs" /></td>
+          </tr>
+        `).join("");
+
+        courses.forEach((course) => {
+          ["office", "phone"].forEach((field) => {
+            const input = document.getElementById(`${field}_${course.code}`);
+            input.addEventListener("input", saveFaculty);
+          });
+        });
+      }
+
+      function saveFaculty() {
+        courses.forEach((course) => {
+          ["office", "phone"].forEach((field) => {
+            const input = document.getElementById(`${field}_${course.code}`);
+            if (input) localStorage.setItem(scheduleKey() + `${field}_${course.code}`, input.value);
+          });
+        });
+      }
+
+      function loadData() {
+        courses.forEach((course) => {
+          ["office", "phone"].forEach((field) => {
+            const input = document.getElementById(`${field}_${course.code}`);
+            if (input) input.value = localStorage.getItem(scheduleKey() + `${field}_${course.code}`) || "";
+          });
+
+          assessmentList(course).forEach((item) => {
+            const key = keyFor(course.code, item.name);
+            document.getElementById(`mark_${key}`).value =
+              localStorage.getItem(scheduleKey() + `mark_${key}`) || "";
+            document.getElementById(`date_${key}`).value =
+              localStorage.getItem(scheduleKey() + `date_${key}`) || "";
+          });
+        });
+        saveData();
+      }
+
+      function clearAllData() {
+        if (!confirm("Reset all CoursePilot marks, dates and faculty details?")) return;
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith(scheduleKey()))
+          .forEach((key) => localStorage.removeItem(key));
+        loadData();
+      }
+
+      function assistantResponse(message) {
+        const text = message.toLowerCase();
+        if (text.includes("today") || text.includes("routine")) {
+          return "The weekly routine is available above. Wednesday has the highest number of classes and overlapping CSE235/CSE223 periods.";
+        }
+        if (text.includes("overlap") || text.includes("conflict")) {
+          return "Known overlaps: CSE223 vs CSE235 on Wednesday (10:00 AM), CSE223 vs CSE415 on Thursday (11:30 AM), and a possible CSE334 vs ACT322 shift overlap.";
+        }
+        if (text.includes("teacher") || text.includes("faculty")) {
+          return "Open the Teacher Directory below the course tracker for names, office rooms and phone fields.";
+        }
+        if (text.includes("study") || text.includes("slide") || text.includes("book") || text.includes("video")) {
+          return "Recommended first step: add verified lecture slides, textbook chapters and curated video links for each course. The dashboard currently tracks courses but does not store external resources yet.";
+        }
+
+        const match = courses.find((course) =>
+          text.includes(course.code.toLowerCase()) || text.includes(course.title.toLowerCase())
+        );
+        if (match) {
+          const entry = Object.values(schedule).flatMap((slots) => Object.values(slots).flat()).find((item) => item.code === match.code);
+          return entry
+            ? `${match.code} — ${match.title}. Teacher: ${match.teacher}. Next listed class location: ${entry.room}.`
+            : `${match.code} — ${match.title}. Teacher: ${match.teacher}.`;
+        }
+        return "I can help with course codes, teachers, routine, overlaps and study-resource planning. Try asking: “CSE415 teacher” or “any overlap today?”";
+      }
+
+      function wireAssistant() {
+        const chatBox = document.getElementById("chatBox");
+        const openChat = document.getElementById("openChat");
+        const closeChat = document.getElementById("closeChat");
+        const messages = document.getElementById("chatMessages");
+
+        openChat.addEventListener("click", () => {
+          chatBox.classList.remove("hidden");
+          openChat.classList.add("hidden");
+          document.getElementById("chatInput").focus();
+        });
+        closeChat.addEventListener("click", () => {
+          chatBox.classList.add("hidden");
+          openChat.classList.remove("hidden");
+        });
+
+        document.getElementById("chatForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const input = document.getElementById("chatInput");
+          const question = input.value.trim();
+          if (!question) return;
+
+          messages.insertAdjacentHTML("beforeend", `<div class="ml-auto max-w-[85%] rounded-xl rounded-tr-none bg-blue-700 px-3 py-2 text-sm text-white">${escapeHTML(question)}</div>`);
+          messages.insertAdjacentHTML("beforeend", `<div class="max-w-[85%] rounded-xl rounded-tl-none bg-slate-100 px-3 py-2 text-sm">${escapeHTML(assistantResponse(question))}</div>`);
+          input.value = "";
+          messages.scrollTop = messages.scrollHeight;
+        });
+      }
+
+      function escapeHTML(value) {
+        const element = document.createElement("span");
+        element.textContent = value;
+        return element.innerHTML;
+      }
+
+      buildSchedule();
+      buildTrackers();
+      buildFaculty();
+      wireAssistant();
+      loadData();
+
+      document.getElementById("resetMarks").addEventListener("click", clearAllData);
+      document.getElementById("summaryResetMarks").addEventListener("click", clearAllData);
+      document.getElementById("printButton").addEventListener("click", () => window.print());
+
+      document.querySelectorAll(".nav-link").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          const view = link.dataset.view;
+          if (!view) return;
+
+          const sectionIds = ["overview", "schedule", "courses", "faculty", "summary"];
+          sectionIds.forEach((id) => {
+            const section = document.getElementById(id);
+            if (section) section.hidden = id !== view;
+          });
+
+          document.querySelectorAll(".nav-link").forEach((item) => item.classList.remove("active"));
+          link.classList.add("active");
+          document.querySelectorAll(".nav-link").forEach((item) => {
+            item.classList.toggle("text-slate-600", item !== link);
+          });
+        });
+      });
+
+      function applySectionView() {
+        const view = new URLSearchParams(window.location.search).get("view");
+        if (window.self !== window.top) {
+          document.getElementById("pageHeader")?.setAttribute("hidden", "");
+          document.getElementById("pageFooter")?.setAttribute("hidden", "");
+          document.getElementById("chatPanel")?.setAttribute("hidden", "");
+          document.getElementById("dashboard")?.classList.remove("py-6");
+          document.getElementById("dashboard")?.classList.add("py-4");
+        }
+        if (!view) return;
+
+        const sectionIds = ["overview", "schedule", "courses", "faculty", "summary"];
+        sectionIds.forEach((id) => {
+          const section = document.getElementById(id);
+          if (section) section.hidden = id !== view;
+        });
+
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          const active = link.dataset.view === view;
+          link.classList.toggle("active", active);
+          link.classList.toggle("text-slate-600", !active);
+        });
+      }
+
+      function updateDashboardNextClass() {
+        const target = document.getElementById("dashboardNextClass");
+        if (!target) return;
+
+        const now = new Date();
+        const jsDayIndex = now.getDay();
+        const coursepilotDayIndex = (jsDayIndex + 1) % 7;
+
+        function timeValue(time) {
+          const match = time.match(/^(\d{1,2}):(\d{2})\s+(AM|PM)$/);
+          if (!match) return -1;
+          let hour = Number(match[1]) % 12;
+          if (match[3] === "PM") hour += 12;
+          return hour * 60 + Number(match[2]);
+        }
+
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        let found = null;
+
+        for (let offset = 0; offset < 7 && !found; offset++) {
+          const dayIndex = (coursepilotDayIndex + offset) % 7;
+          const day = days[dayIndex];
+          const slots = schedule[day] || {};
+          const orderedTimes = Object.keys(slots).sort((a, b) => timeValue(a) - timeValue(b));
+
+          for (const time of orderedTimes) {
+            if (offset === 0 && timeValue(time) <= nowMinutes) continue;
+            found = { day, time, classes: slots[time] };
+            break;
+          }
+        }
+
+        if (!found) {
+          target.textContent = "No upcoming class";
+          return;
+        }
+
+        const first = found.classes[0];
+        target.textContent = `${found.day} • ${found.time} — ${first.code}`;
+      }
+
+      updateDashboardNextClass();
+      applySectionView();
+    </script>
+    <footer id="pageFooter" class="border-t border-slate-200 bg-white px-4 py-4 text-center text-xs text-slate-500">
+      © 2026 Md. Mayen. All Rights Reserved. Unauthorized copying, modification, or distribution of this code is strictly prohibited.
+    </footer>
+  </body>
+</html>
