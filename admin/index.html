@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#172554" />
+    <title>CoursePilot | Admin workspace</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #1e293b;
+        background: #f1f5f9;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; }
+      button, input, select { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      .layout { min-height: 100vh; }
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 5;
+        display: flex;
+        width: 248px;
+        flex-direction: column;
+        padding: 24px 16px;
+        color: #e2e8f0;
+        background: #172554;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 28px; }
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 13px;
+        color: #172554;
+        background: #bfdbfe;
+        font-weight: 900;
+      }
+      .brand strong { display: block; color: white; font-size: 16px; }
+      .brand small { display: block; margin-top: 3px; color: #bfdbfe; font-size: 11px; }
+      .nav-label { padding: 8px 12px; color: #93a6cd; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+      .nav-button {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 12px;
+        margin: 3px 0;
+        padding: 12px;
+        border: 0;
+        border-radius: 10px;
+        color: #cbd5e1;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .nav-button:hover, .nav-button.active { color: white; background: #263d75; }
+      .nav-icon { display: inline-grid; width: 22px; place-items: center; color: #93c5fd; font-size: 16px; }
+      .sidebar-note { margin-top: auto; padding: 14px; border: 1px solid #354976; border-radius: 12px; color: #cbd5e1; font-size: 11px; line-height: 1.6; }
+      .sidebar-note strong { display: block; margin-bottom: 4px; color: white; }
+      .main { min-height: 100vh; margin-left: 248px; }
+      .topbar {
+        display: flex;
+        min-height: 76px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px clamp(18px, 4vw, 48px);
+        border-bottom: 1px solid #e2e8f0;
+        background: rgba(255,255,255,.92);
+      }
+      .breadcrumb { color: #64748b; font-size: 12px; }
+      .breadcrumb strong { color: #172554; }
+      .admin-chip { display: flex; align-items: center; gap: 9px; color: #334155; font-size: 12px; font-weight: 750; }
+      .avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #1e3a8a; background: #dbeafe; font-size: 12px; }
+      .content { max-width: 1440px; margin: auto; padding: 30px clamp(18px, 4vw, 48px) 48px; }
+      .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+      .eyebrow { margin: 0 0 7px; color: #2563eb; font-size: 10px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+      h1 { margin: 0; color: #172554; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.04em; }
+      .subtitle { margin: 8px 0 0; color: #64748b; font-size: 13px; }
+      .preview-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid #fde68a; border-radius: 999px; color: #92400e; background: #fffbeb; font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .preview-dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; }
+      .notice { margin-bottom: 20px; padding: 12px 14px; border: 1px solid #bfdbfe; border-radius: 12px; color: #1e40af; background: #eff6ff; font-size: 12px; line-height: 1.55; }
+      .notice strong { color: #1e3a8a; }
+      .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+      .card { border: 1px solid #e2e8f0; border-radius: 15px; background: white; box-shadow: 0 8px 24px rgba(15,23,42,.04); }
+      .stat { display: flex; min-height: 120px; align-items: flex-start; justify-content: space-between; padding: 18px; }
+      .stat-label { color: #64748b; font-size: 11px; font-weight: 750; }
+      .stat-value { display: block; margin-top: 11px; color: #172554; font-size: 29px; font-weight: 850; letter-spacing: -.04em; }
+      .stat-detail { display: block; margin-top: 3px; color: #94a3b8; font-size: 10px; }
+      .stat-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; color: #1d4ed8; background: #eff6ff; font-size: 16px; }
+      .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .8fr); gap: 18px; }
+      .card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #eef2f7; }
+      .card-heading h2 { margin: 0; color: #172554; font-size: 15px; }
+      .card-heading p { margin: 5px 0 0; color: #94a3b8; font-size: 11px; }
+      .text-link { padding: 7px 10px; border: 0; border-radius: 8px; color: #1d4ed8; background: #eff6ff; cursor: pointer; font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .text-link:hover { background: #dbeafe; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; text-align: left; }
+      th { padding: 12px 16px; color: #94a3b8; background: #f8fafc; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+      td { padding: 13px 16px; border-top: 1px solid #f1f5f9; color: #475569; font-size: 11px; }
+      td strong { color: #172554; font-size: 11px; }
+      .course-sub { display: block; margin-top: 3px; color: #94a3b8; font-size: 10px; }
+      .teacher-avatar { display: inline-grid; width: 28px; height: 28px; margin-right: 8px; place-items: center; border-radius: 9px; color: #1d4ed8; background: #eff6ff; font-size: 9px; font-weight: 850; vertical-align: middle; }
+      .routine-list { padding: 4px 18px 14px; }
+      .routine-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+      .routine-item:last-child { border-bottom: 0; }
+      .routine-time { min-width: 63px; color: #1d4ed8; font-size: 10px; font-weight: 850; }
+      .routine-info strong { display: block; color: #172554; font-size: 11px; }
+      .routine-info span { display: block; margin-top: 4px; color: #94a3b8; font-size: 10px; }
+      .page-section { display: none; }
+      .page-section.active { display: block; }
+      .section-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+      .section-toolbar h2 { margin: 0; color: #172554; font-size: 17px; }
+      .section-toolbar p { margin: 5px 0 0; color: #64748b; font-size: 11px; }
+      .toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .button {
+        display: inline-flex;
+        min-height: 36px;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        color: #334155;
+        background: white;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .button:hover { background: #f8fafc; }
+      .button.primary { border-color: #1d4ed8; color: white; background: #1d4ed8; }
+      .button.primary:hover { background: #1e40af; }
+      .button.danger { border-color: #fecaca; color: #b91c1c; background: white; }
+      .section-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, .75fr); align-items: start; gap: 18px; }
+      .panel { padding: 18px; }
+      .panel h3 { margin: 0 0 14px; color: #172554; font-size: 14px; }
+      .search { width: min(260px, 100%); min-height: 36px; padding: 8px 11px; border: 1px solid #cbd5e1; border-radius: 9px; outline: none; font-size: 11px; }
+      .search:focus, .field input:focus, .field select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+      .row-actions { display: flex; gap: 5px; }
+      .icon-button { padding: 5px 7px; border: 0; border-radius: 6px; color: #1d4ed8; background: #eff6ff; cursor: pointer; font-size: 10px; font-weight: 800; }
+      .icon-button.delete { color: #b91c1c; background: #fef2f2; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field.full { grid-column: 1 / -1; }
+      .field label { color: #475569; font-size: 10px; font-weight: 800; }
+      .field input, .field select { width: 100%; min-height: 37px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; color: #1e293b; background: white; font-size: 11px; }
+      .form-actions { display: flex; gap: 8px; margin-top: 14px; }
+      .form-status { min-height: 16px; margin: 10px 0 0; color: #047857; font-size: 10px; }
+      .empty-state { padding: 24px; color: #94a3b8; text-align: center; font-size: 11px; }
+      .footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px; text-align: center; }
+
+      @media (max-width: 1050px) {
+        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .dashboard-grid, .section-layout { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 700px) {
+        .sidebar { position: static; width: auto; padding: 14px; }
+        .brand { padding: 0 4px 12px; }
+        .nav-label, .sidebar-note { display: none; }
+        .sidebar nav { display: flex; gap: 5px; overflow-x: auto; }
+        .nav-button { width: auto; flex: 0 0 auto; margin: 0; padding: 9px 10px; font-size: 11px; }
+        .nav-icon { display: none; }
+        .main { margin-left: 0; }
+        .topbar { min-height: 56px; padding: 10px 16px; }
+        .content { padding: 23px 15px 32px; }
+        .page-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+        .stats { gap: 9px; }
+        .stat { min-height: 105px; padding: 14px; }
+        .stat-value { font-size: 24px; }
+        .card-heading { padding: 15px; }
+        .toolbar-actions { width: 100%; }
+        .form-grid { grid-template-columns: 1fr; }
+        .field.full { grid-column: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">CP</span>
+          <span><strong>CoursePilot</strong><small>Author admin</small></span>
+        </div>
+        <p class="nav-label">Workspace</p>
+        <nav aria-label="Admin sections">
+          <button class="nav-button active" type="button" data-section="overview"><span class="nav-icon">▦</span>Overview</button>
+          <button class="nav-button" type="button" data-section="faculty"><span class="nav-icon">♙</span>Faculty</button>
+          <button class="nav-button" type="button" data-section="routine"><span class="nav-icon">▤</span>Class routine</button>
+        </nav>
+        <div class="sidebar-note">
+          <strong>Standalone preview</strong>
+          This admin UI is separate from the public website. Changes are temporary until a backend is connected.
+        </div>
+      </aside>
+
+      <div class="main">
+        <header class="topbar">
+          <div class="breadcrumb">Admin workspace <span aria-hidden="true">/</span> <strong id="breadcrumbCurrent">Overview</strong></div>
+          <div class="admin-chip"><span class="avatar">AD</span><span>Website author</span></div>
+        </header>
+
+        <main class="content">
+          <section class="page-section active" id="section-overview">
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">Summer 2026 • Administration</p>
+                <h1>Admin overview</h1>
+                <p class="subtitle">Manage faculty details and class routine for the website.</p>
+              </div>
+              <span class="preview-badge"><span class="preview-dot"></span>UI preview · not connected to database</span>
+            </div>
+            <div class="notice"><strong>Preview mode:</strong> add, edit and delete actions only update this page's temporary data. There is no database connection or sign-in/access control yet; changes are not saved and do not update the public website.</div>
+
+            <div class="stats" aria-label="Admin overview statistics">
+              <article class="card stat"><div><span class="stat-label">Faculty records</span><strong class="stat-value" id="facultyStat">0</strong><span class="stat-detail">Teacher directory entries</span></div><span class="stat-icon">♙</span></article>
+              <article class="card stat"><div><span class="stat-label">Routine entries</span><strong class="stat-value" id="routineStat">0</strong><span class="stat-detail">Scheduled classes per week</span></div><span class="stat-icon">▤</span></article>
+              <article class="card stat"><div><span class="stat-label">Courses covered</span><strong class="stat-value" id="courseStat">0</strong><span class="stat-detail">Unique course codes</span></div><span class="stat-icon">▣</span></article>
+              <article class="card stat"><div><span class="stat-label">Today's classes</span><strong class="stat-value" id="todayStat">0</strong><span class="stat-detail" id="todayLabel">Scheduled today</span></div><span class="stat-icon">◷</span></article>
+            </div>
+
+            <div class="dashboard-grid">
+              <section class="card">
+                <div class="card-heading">
+                  <div><h2>Faculty directory</h2><p>Current teacher information</p></div>
+                  <button class="text-link" type="button" data-open-section="faculty">Manage faculty →</button>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Teacher</th><th>Course</th><th>Office</th></tr></thead>
+                    <tbody id="overviewFaculty"></tbody>
+                  </table>
+                </div>
+              </section>
+              <section class="card">
+                <div class="card-heading">
+                  <div>                  <h2>Classes today</h2><p>Based on the weekly routine</p></div>
+                  <button class="text-link" type="button" data-open-section="routine">Edit routine →</button>
+                </div>
+                <div class="routine-list" id="overviewRoutine"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="page-section" id="section-faculty">
+            <div class="page-heading">
+              <div><p class="eyebrow">People & teaching</p><h1>Faculty management</h1><p class="subtitle">Maintain teacher contacts and course assignments.</p></div>
+              <span class="preview-badge"><span class="preview-dot"></span>Preview only · not saved</span>
+            </div>
+            <div class="section-layout">
+              <section class="card">
+                <div class="card-heading">
+                  <div><h2>Faculty directory</h2><p id="facultyCountLabel">0 records</p></div>
+                  <input class="search" id="facultySearch" type="search" placeholder="Search faculty or course..." aria-label="Search faculty or course" />
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Teacher</th><th>Course</th><th>Office</th><th>Phone</th><th>Actions</th></tr></thead>
+                    <tbody id="facultyTable"></tbody>
+                  </table>
+                </div>
+                <p class="empty-state" id="facultyEmpty" hidden>No faculty records found.</p>
+              </section>
+              <form class="card panel" id="facultyForm">
+                <h3 id="facultyFormTitle">Add faculty record</h3>
+                <input id="facultyOriginalCode" type="hidden" />
+                <div class="form-grid">
+                  <div class="field"><label for="facultyCode">Course code</label><input id="facultyCode" name="code" required maxlength="12" placeholder="e.g. CSE415" /></div>
+                  <div class="field"><label for="facultyInitials">Initials</label><input id="facultyInitials" name="initials" maxlength="8" placeholder="e.g. ZI" /></div>
+                  <div class="field full"><label for="facultyTitle">Course title</label><input id="facultyTitle" name="title" required maxlength="80" placeholder="Course title" /></div>
+                  <div class="field full"><label for="facultyName">Teacher name</label><input id="facultyName" name="name" required maxlength="80" placeholder="Full name" /></div>
+                  <div class="field"><label for="facultyOffice">Office</label><input id="facultyOffice" name="office" maxlength="40" placeholder="Office room" /></div>
+                  <div class="field"><label for="facultyPhone">Phone</label><input id="facultyPhone" name="phone" type="tel" maxlength="24" placeholder="Phone number" /></div>
+                </div>
+                <div class="form-actions"><button class="button primary" id="facultySubmit" type="submit">Add faculty</button><button class="button" id="facultyCancel" type="button" hidden>Cancel edit</button></div>
+                <p class="form-status" id="facultyStatus" role="status"></p>
+              </form>
+            </div>
+          </section>
+
+          <section class="page-section" id="section-routine">
+            <div class="page-heading">
+              <div><p class="eyebrow">Timetable</p><h1>Class routine management</h1><p class="subtitle">Review and update weekly class locations and times.</p></div>
+              <span class="preview-badge"><span class="preview-dot"></span>Preview only · not saved</span>
+            </div>
+            <div class="section-layout">
+              <section class="card">
+                <div class="card-heading">
+                  <div><h2>Weekly routine</h2><p id="routineCountLabel">0 scheduled classes</p></div>
+                  <select class="search" id="routineDayFilter" aria-label="Filter routine by day">
+                    <option value="">All days</option>
+                    <option>Saturday</option><option>Sunday</option><option>Monday</option>
+                    <option>Tuesday</option><option>Wednesday</option><option>Thursday</option>
+                  </select>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Day</th><th>Time</th><th>Course</th><th>Teacher / room</th><th>Actions</th></tr></thead>
+                    <tbody id="routineTable"></tbody>
+                  </table>
+                </div>
+                <p class="empty-state" id="routineEmpty" hidden>No routine entries found.</p>
+              </section>
+              <form class="card panel" id="routineForm">
+                <h3 id="routineFormTitle">Add routine entry</h3>
+                <input id="routineOriginalId" type="hidden" />
+                <div class="form-grid">
+                  <div class="field"><label for="routineDay">Day</label><select id="routineDay" name="day" required><option value="">Select day</option><option>Saturday</option><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option></select></div>
+                  <div class="field"><label for="routineTime">Start time</label><input id="routineTime" name="time" type="time" required /></div>
+                  <div class="field"><label for="routineCode">Course code</label><input id="routineCode" name="code" required maxlength="12" placeholder="e.g. CSE415" /></div>
+                  <div class="field"><label for="routineRoom">Room</label><input id="routineRoom" name="room" required maxlength="30" placeholder="Room number" /></div>
+                  <div class="field full"><label for="routineTeacher">Teacher</label><input id="routineTeacher" name="teacher" required maxlength="80" placeholder="Teacher name" /></div>
+                </div>
+                <div class="form-actions"><button class="button primary" id="routineSubmit" type="submit">Add routine</button><button class="button" id="routineCancel" type="button" hidden>Cancel edit</button></div>
+                <p class="form-status" id="routineStatus" role="status"></p>
+              </form>
+            </div>
+          </section>
+
+          <footer class="footer">CoursePilot Author Admin · Standalone interface · Backend integration not configured</footer>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const faculty = [
+        { code: "ACT322", title: "Finance", name: "Shammi Akter", initials: "SA", office: "", phone: "" },
+        { code: "CSE233", title: "Internet of Things", name: "SRRS Teacher", initials: "SRRS", office: "", phone: "" },
+        { code: "CSE335", title: "Computer Architecture", name: "MAIT Teacher", initials: "MAIT", office: "", phone: "" },
+        { code: "CSE235", title: "Numerical Methods", name: "Mohammad Abdul Halim", initials: "ALH", office: "", phone: "" },
+        { code: "CSE334", title: "Research & Innovation", name: "Tabib", initials: "TB", office: "", phone: "" },
+        { code: "CSE415", title: "Web Engineering", name: "Zafor Iqbal", initials: "ZI", office: "", phone: "" },
+        { code: "CSE223", title: "Digital Electronics", name: "Mohammad Al Rasel", initials: "MAR", office: "", phone: "" },
+        { code: "CSE224", title: "Digital Electronics Lab", name: "Not provided", initials: "—", office: "", phone: "" },
+        { code: "CSE316", title: "Software Project III", name: "Not provided", initials: "—", office: "", phone: "" }
+      ];
+
+      let nextRoutineId = 15;
+      const routine = [
+        { id: 1, day: "Saturday", time: "13:00", code: "ACT322", teacher: "Shammi Akter", room: "KT_217" },
+        { id: 2, day: "Sunday", time: "08:30", code: "CSE233", teacher: "SRRS", room: "ANX1_207" },
+        { id: 3, day: "Sunday", time: "13:00", code: "CSE335", teacher: "MAIT", room: "ANEX1_202" },
+        { id: 4, day: "Sunday", time: "14:30", code: "CSE224", teacher: "Roitune Section", room: "KT-810" },
+        { id: 5, day: "Monday", time: "10:00", code: "CSE235", teacher: "Mohammad Abdul Halim", room: "ANEX1_307" },
+        { id: 6, day: "Tuesday", time: "08:30", code: "CSE233", teacher: "SRRS", room: "ANX1_210" },
+        { id: 7, day: "Tuesday", time: "11:30", code: "CSE335", teacher: "MAIT", room: "ANEX1_401" },
+        { id: 8, day: "Wednesday", time: "08:30", code: "CSE415", teacher: "Zafor Iqbal", room: "ANX1_209" },
+        { id: 9, day: "Wednesday", time: "10:00", code: "CSE235", teacher: "Mohammad Abdul Halim", room: "ANEX1_204" },
+        { id: 10, day: "Wednesday", time: "10:00", code: "CSE223", teacher: "Mohammad Al Rasel", room: "ANX_209" },
+        { id: 11, day: "Wednesday", time: "16:00", code: "CSE334", teacher: "Tabib", room: "AB4_318(B)" },
+        { id: 12, day: "Thursday", time: "11:30", code: "CSE415", teacher: "Zafor Iqbal", room: "KT320" },
+        { id: 13, day: "Thursday", time: "11:30", code: "CSE223", teacher: "Mohammad Al Rasel", room: "KT_514" },
+        { id: 14, day: "Thursday", time: "13:00", code: "ACT322", teacher: "Shammi Akter", room: "KT_217" }
+      ];
+      const weekdays = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+      }
+
+      function initialsFor(name, initials) {
+        return initials || name.split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase();
+      }
+
+      function setSection(sectionName) {
+        document.querySelectorAll(".page-section").forEach((section) => {
+          section.classList.toggle("active", section.id === `section-${sectionName}`);
+        });
+        document.querySelectorAll(".nav-button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.section === sectionName);
+        });
+        const label = sectionName === "faculty" ? "Faculty" : sectionName === "routine" ? "Class routine" : "Overview";
+        document.getElementById("breadcrumbCurrent").textContent = label;
+      }
+
+      function orderedRoutine(items) {
+        return [...items].sort((a, b) =>
+          weekdays.indexOf(a.day) - weekdays.indexOf(b.day) || a.time.localeCompare(b.time)
+        );
+      }
+
+      function renderFaculty() {
+        const query = document.getElementById("facultySearch").value.trim().toLowerCase();
+        const rows = faculty
+          .filter((person) => `${person.code} ${person.title} ${person.name} ${person.office}`.toLowerCase().includes(query))
+          .sort((a, b) => a.code.localeCompare(b.code));
+        document.getElementById("facultyCountLabel").textContent = `${faculty.length} record${faculty.length === 1 ? "" : "s"}`;
+        document.getElementById("facultyTable").innerHTML = rows.map((person) => `
+          <tr>
+            <td><span class="teacher-avatar">${escapeHTML(initialsFor(person.name, person.initials))}</span><strong>${escapeHTML(person.name)}</strong></td>
+            <td><strong>${escapeHTML(person.code)}</strong><span class="course-sub">${escapeHTML(person.title)}</span></td>
+            <td>${escapeHTML(person.office || "—")}</td>
+            <td>${escapeHTML(person.phone || "—")}</td>
+            <td><div class="row-actions"><button class="icon-button" type="button" data-edit-faculty="${escapeHTML(person.code)}">Edit</button><button class="icon-button delete" type="button" data-delete-faculty="${escapeHTML(person.code)}">Delete</button></div></td>
+          </tr>
+        `).join("");
+        document.getElementById("facultyEmpty").hidden = rows.length > 0;
+        renderOverviewFaculty();
+      }
+
+      function renderOverviewFaculty() {
+        document.getElementById("overviewFaculty").innerHTML = faculty.slice(0, 5).map((person) => `
+          <tr>
+            <td><span class="teacher-avatar">${escapeHTML(initialsFor(person.name, person.initials))}</span><strong>${escapeHTML(person.name)}</strong></td>
+            <td><strong>${escapeHTML(person.code)}</strong><span class="course-sub">${escapeHTML(person.title)}</span></td>
+            <td>${escapeHTML(person.office || "—")}</td>
+          </tr>
+        `).join("");
+      }
+
+      function renderRoutine() {
+        const selectedDay = document.getElementById("routineDayFilter").value;
+        const entries = orderedRoutine(routine).filter((entry) => !selectedDay || entry.day === selectedDay);
+        document.getElementById("routineCountLabel").textContent = `${routine.length} scheduled class${routine.length === 1 ? "" : "es"}`;
+        document.getElementById("routineTable").innerHTML = entries.map((entry) => `
+          <tr>
+            <td><strong>${escapeHTML(entry.day)}</strong></td>
+            <td>${escapeHTML(formatTime(entry.time))}</td>
+            <td><strong>${escapeHTML(entry.code)}</strong></td>
+            <td>${escapeHTML(entry.teacher)}<span class="course-sub">${escapeHTML(entry.room)}</span></td>
+            <td><div class="row-actions"><button class="icon-button" type="button" data-edit-routine="${entry.id}">Edit</button><button class="icon-button delete" type="button" data-delete-routine="${entry.id}">Delete</button></div></td>
+          </tr>
+        `).join("");
+        document.getElementById("routineEmpty").hidden = entries.length > 0;
+        renderOverviewRoutine();
+      }
+
+      function renderOverviewRoutine() {
+        const todayIndex = new Date().getDay();
+        const scheduleDay = weekdays[(todayIndex + 1) % 7] || "Friday";
+        const nextClasses = orderedRoutine(routine).filter((entry) => entry.day === scheduleDay).slice(0, 4);
+        document.getElementById("overviewRoutine").innerHTML = nextClasses.length
+          ? nextClasses.map((entry) => `
+            <div class="routine-item">
+              <span class="routine-time">${escapeHTML(formatTime(entry.time))}</span>
+              <span class="routine-info"><strong>${escapeHTML(entry.code)} · ${escapeHTML(entry.title || courseTitle(entry.code))}</strong><span>${escapeHTML(entry.room)} · ${escapeHTML(entry.teacher)}</span></span>
+            </div>
+          `).join("")
+          : '<p class="empty-state">No classes are listed for today.</p>';
+        document.getElementById("todayLabel").textContent = `Scheduled for ${scheduleDay}`;
+        document.getElementById("todayStat").textContent = nextClasses.length;
+      }
+
+      function courseTitle(code) {
+        const person = faculty.find((item) => item.code === code);
+        return person ? person.title : "Course";
+      }
+
+      function formatTime(value) {
+        const [hour, minute] = value.split(":").map(Number);
+        const suffix = hour >= 12 ? "PM" : "AM";
+        return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${suffix}`;
+      }
+
+      function renderStats() {
+        document.getElementById("facultyStat").textContent = faculty.length;
+        document.getElementById("routineStat").textContent = routine.length;
+        document.getElementById("courseStat").textContent = new Set([
+          ...faculty.map((person) => person.code),
+          ...routine.map((entry) => entry.code)
+        ]).size;
+      }
+
+      function renderAll() {
+        renderStats();
+        renderFaculty();
+        renderRoutine();
+      }
+
+      function resetFacultyForm() {
+        document.getElementById("facultyForm").reset();
+        document.getElementById("facultyOriginalCode").value = "";
+        document.getElementById("facultyFormTitle").textContent = "Add faculty record";
+        document.getElementById("facultySubmit").textContent = "Add faculty";
+        document.getElementById("facultyCancel").hidden = true;
+        document.getElementById("facultyStatus").textContent = "";
+      }
+
+      function editFaculty(code) {
+        const person = faculty.find((item) => item.code === code);
+        if (!person) return;
+        document.getElementById("facultyOriginalCode").value = person.code;
+        document.getElementById("facultyCode").value = person.code;
+        document.getElementById("facultyTitle").value = person.title;
+        document.getElementById("facultyName").value = person.name;
+        document.getElementById("facultyInitials").value = person.initials;
+        document.getElementById("facultyOffice").value = person.office;
+        document.getElementById("facultyPhone").value = person.phone;
+        document.getElementById("facultyFormTitle").textContent = "Edit faculty record";
+        document.getElementById("facultySubmit").textContent = "Update faculty";
+        document.getElementById("facultyCancel").hidden = false;
+        document.getElementById("facultyName").focus();
+      }
+
+      function resetRoutineForm() {
+        document.getElementById("routineForm").reset();
+        document.getElementById("routineOriginalId").value = "";
+        document.getElementById("routineFormTitle").textContent = "Add routine entry";
+        document.getElementById("routineSubmit").textContent = "Add routine";
+        document.getElementById("routineCancel").hidden = true;
+        document.getElementById("routineStatus").textContent = "";
+      }
+
+      function editRoutine(id) {
+        const entry = routine.find((item) => item.id === id);
+        if (!entry) return;
+        document.getElementById("routineOriginalId").value = String(entry.id);
+        document.getElementById("routineDay").value = entry.day;
+        document.getElementById("routineTime").value = entry.time;
+        document.getElementById("routineCode").value = entry.code;
+        document.getElementById("routineTeacher").value = entry.teacher;
+        document.getElementById("routineRoom").value = entry.room;
+        document.getElementById("routineFormTitle").textContent = "Edit routine entry";
+        document.getElementById("routineSubmit").textContent = "Update routine";
+        document.getElementById("routineCancel").hidden = false;
+        document.getElementById("routineDay").focus();
+      }
+
+      document.querySelectorAll(".nav-button").forEach((button) => {
+        button.addEventListener("click", () => setSection(button.dataset.section));
+      });
+      document.querySelectorAll("[data-open-section]").forEach((button) => {
+        button.addEventListener("click", () => setSection(button.dataset.openSection));
+      });
+      document.getElementById("facultySearch").addEventListener("input", renderFaculty);
+      document.getElementById("routineDayFilter").addEventListener("change", renderRoutine);
+
+      document.getElementById("facultyForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const originalCode = document.getElementById("facultyOriginalCode").value;
+        const person = {
+          code: document.getElementById("facultyCode").value.trim().toUpperCase(),
+          title: document.getElementById("facultyTitle").value.trim(),
+          name: document.getElementById("facultyName").value.trim(),
+          initials: document.getElementById("facultyInitials").value.trim().toUpperCase(),
+          office: document.getElementById("facultyOffice").value.trim(),
+          phone: document.getElementById("facultyPhone").value.trim()
+        };
+        const existingIndex = faculty.findIndex((item) => item.code === person.code);
+        if (existingIndex >= 0 && person.code !== originalCode) {
+          document.getElementById("facultyStatus").textContent = "That course code already has a faculty record.";
+          return;
+        }
+        if (originalCode) {
+          const index = faculty.findIndex((item) => item.code === originalCode);
+          if (index >= 0) faculty[index] = person;
+          document.getElementById("facultyStatus").textContent = "Faculty record updated in this preview.";
+        } else {
+          faculty.push(person);
+          document.getElementById("facultyStatus").textContent = "Faculty record added to this preview.";
+        }
+        renderAll();
+        resetFacultyForm();
+        setSection("faculty");
+      });
+
+      document.getElementById("facultyTable").addEventListener("click", (event) => {
+        const editButton = event.target.closest("[data-edit-faculty]");
+        const deleteButton = event.target.closest("[data-delete-faculty]");
+        if (editButton) editFaculty(editButton.dataset.editFaculty);
+        if (deleteButton) {
+          const code = deleteButton.dataset.deleteFaculty;
+          const index = faculty.findIndex((item) => item.code === code);
+          if (index >= 0) faculty.splice(index, 1);
+          renderAll();
+          resetFacultyForm();
+        }
+      });
+      document.getElementById("facultyCancel").addEventListener("click", resetFacultyForm);
+
+      document.getElementById("routineForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const originalId = document.getElementById("routineOriginalId").value;
+        const entry = {
+          id: originalId ? Number(originalId) : nextRoutineId++,
+          day: document.getElementById("routineDay").value,
+          time: document.getElementById("routineTime").value,
+          code: document.getElementById("routineCode").value.trim().toUpperCase(),
+          teacher: document.getElementById("routineTeacher").value.trim(),
+          room: document.getElementById("routineRoom").value.trim()
+        };
+        const duplicate = routine.some((item) =>
+          item.id !== entry.id && item.day === entry.day && item.time === entry.time && item.code === entry.code
+        );
+        if (duplicate) {
+          document.getElementById("routineStatus").textContent = "This course already has a class at that day and time.";
+          return;
+        }
+        if (originalId) {
+          const index = routine.findIndex((item) => item.id === entry.id);
+          if (index >= 0) routine[index] = entry;
+          document.getElementById("routineStatus").textContent = "Routine entry updated in this preview.";
+        } else {
+          routine.push(entry);
+          document.getElementById("routineStatus").textContent = "Routine entry added to this preview.";
+        }
+        renderAll();
+        resetRoutineForm();
+        setSection("routine");
+      });
+
+      document.getElementById("routineTable").addEventListener("click", (event) => {
+        const editButton = event.target.closest("[data-edit-routine]");
+        const deleteButton = event.target.closest("[data-delete-routine]");
+        if (editButton) editRoutine(Number(editButton.dataset.editRoutine));
+        if (deleteButton) {
+          const id = Number(deleteButton.dataset.deleteRoutine);
+          const index = routine.findIndex((item) => item.id === id);
+          if (index >= 0) routine.splice(index, 1);
+          renderAll();
+          resetRoutineForm();
+        }
+      });
+      document.getElementById("routineCancel").addEventListener("click", resetRoutineForm);
+
+      renderAll();
+    </script>
+  </body>
+</html>
