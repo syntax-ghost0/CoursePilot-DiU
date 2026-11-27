@@ -76,10 +76,10 @@
       class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur no-print"
     >
       <div
-        class="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-6"
+        class="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between px-4 py-3 md:px-6"
       >
         <a
-          href="#dashboard"
+          href="Class%20Routine.html?view=overview"
           class="flex items-center gap-3"
           aria-label="CoursePilot home"
         >
@@ -98,30 +98,30 @@
         </a>
 
         <nav
-          class="hidden items-center gap-1 md:flex"
+          class="flex w-full items-center gap-1 overflow-x-auto pt-2 md:w-auto md:overflow-visible md:pt-0"
           aria-label="Primary navigation"
         >
           <a
-            class="nav-link active rounded-lg px-3 py-2 text-sm font-bold"
-            href="Dashboard.html"
+            class="nav-link active shrink-0 rounded-lg px-3 py-2 text-sm font-bold"
+            href="Class%20Routine.html?view=overview"
             data-view="overview"
             >Dashboard</a
           >
           <a
-            class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
-            href="Routine.html"
+            class="nav-link shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
+            href="Class%20Routine.html?view=schedule"
             data-view="schedule"
             >Routine</a
           >
           <a
-            class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
-            href="Courses.html"
+            class="nav-link shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
+            href="Class%20Routine.html?view=courses"
             data-view="courses"
             >Courses</a
           >
           <a
-            class="nav-link rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
-            href="Teachers.html"
+            class="nav-link shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-slate-600"
+            href="Class%20Routine.html?view=faculty"
             data-view="faculty"
             >Teachers</a
           >
@@ -227,7 +227,7 @@
             </div>
             <div class="flex gap-2 no-print">
               <a
-                href="Courses.html"
+                href="Class%20Routine.html?view=courses"
                 class="rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white"
                 >Update marks</a
               >
@@ -1277,18 +1277,20 @@
         .getElementById("summaryResetMarks")
         .addEventListener("click", clearAllData);
 
-      function applySectionView() {
-        const requestedView = new URLSearchParams(window.location.search).get(
+      const sectionViews = ["overview", "schedule", "courses", "faculty"];
+
+      function applySectionView(
+        requestedView = new URLSearchParams(window.location.search).get(
           "view",
-        );
-        const view = ["overview", "schedule", "courses", "faculty"].includes(
-          requestedView,
-        )
+        ),
+      ) {
+        const view = sectionViews.includes(requestedView)
           ? requestedView
           : "overview";
 
-        const sectionIds = ["overview", "schedule", "courses", "faculty"];
-        sectionIds.forEach((id) => {
+        if (view === "overview") refreshDashboardDayEvents();
+
+        sectionViews.forEach((id) => {
           const section = document.getElementById(id);
           if (section) section.hidden = id !== view;
         });
@@ -1298,6 +1300,41 @@
           link.classList.toggle("active", active);
           link.classList.toggle("text-slate-600", !active);
         });
+      }
+
+      function wireViewNavigation() {
+        document.querySelectorAll('a[href*="?view="]').forEach((link) => {
+          link.addEventListener("click", (event) => {
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              (link.target && link.target !== "_self")
+            ) {
+              return;
+            }
+
+            const targetUrl = new URL(link.href);
+            const targetView = targetUrl.searchParams.get("view");
+            if (
+              !sectionViews.includes(targetView) ||
+              targetUrl.origin !== window.location.origin ||
+              targetUrl.pathname !== window.location.pathname
+            ) {
+              return;
+            }
+
+            event.preventDefault();
+            if (targetUrl.href !== window.location.href) {
+              window.history.pushState({ view: targetView }, "", targetUrl.href);
+            }
+            applySectionView(targetView);
+          });
+        });
+
+        window.addEventListener("popstate", () => applySectionView());
       }
 
       function renderDashboardDayEvents(date, listId, dateId, isNextDay) {
@@ -1432,16 +1469,25 @@
         list.innerHTML = holidaySticker + classEvents;
       }
 
-      const today = new Date();
-      const nextDay = new Date(today);
-      nextDay.setDate(today.getDate() + 1);
-      renderDashboardDayEvents(today, "todayEventsList", "todayEventsDate", false);
-      renderDashboardDayEvents(
-        nextDay,
-        "nextDayEventsList",
-        "nextDayEventsDate",
-        true,
-      );
+      function refreshDashboardDayEvents() {
+        const today = new Date();
+        const nextDay = new Date(today);
+        nextDay.setDate(today.getDate() + 1);
+        renderDashboardDayEvents(
+          today,
+          "todayEventsList",
+          "todayEventsDate",
+          false,
+        );
+        renderDashboardDayEvents(
+          nextDay,
+          "nextDayEventsList",
+          "nextDayEventsDate",
+          true,
+        );
+      }
+
+      wireViewNavigation();
       applySectionView();
     </script>
     <footer
